@@ -3,54 +3,51 @@ var sceneScript = {
         //地图根节点 gameMap
         this.gameMapNode = cc.find("Canvas/" + gameInfo.mapRootName);
         this.groupName = gameInfo.obstructionGroupName;
-        //将地图着分成多少块
-        let blockCount = 30;
+        //将地图水平和垂直分成多少块
+        this.mapData = {};
+        this.mapData.horizontalBlockC = gameInfo.horizontalBlockC;
+        this.mapData.verticalBlockC = gameInfo.verticalBlockC;
 
-        let mapData = this.produceMapData(blockCount);
+        this.produceMapData();
         if (e.reply)
-            e.reply("getMapData sucessed!", mapData);
+            e.reply("getMapData sucessed!", this.mapData);
     },
 
-    "produceMapData": function (blockCount) {
-        let mapData = {};
+    "produceMapData": function () {
         let w = this.gameMapNode.width;
         let h = this.gameMapNode.height;
 
         //地图名为地图根节点名
-        mapData.name = this.gameMapNode.name;
+        this.mapData.name = this.gameMapNode.name;
 
-        mapData.blockCount = blockCount;
-
-        mapData.mapSize = {
+        this.mapData.mapSize = {
             "width": w,
             "height": h
         };
 
         //块的大小
-        mapData.blockSize = {
-            "width": mapData.mapSize.width / blockCount,
-            "height": mapData.mapSize.height / blockCount
+        this.mapData.blockSize = {
+            "width": this.mapData.mapSize.width / this.mapData.horizontalBlockC,
+            "height": this.mapData.mapSize.height / this.mapData.verticalBlockC
         };
 
         //创建二维数组
-        mapData.blockArray = new Array(blockCount);
-        for (let i = 0; i < blockCount; i++)
-            mapData.blockArray[i] = new Array(blockCount);
+        this.mapData.blockArray = new Array(this.mapData.verticalBlockC);
+        for (let i = 0; i < this.mapData.verticalBlockC; i++)
+            this.mapData.blockArray[i] = new Array(this.horizontalBlockC);
 
-        this.initMapData(mapData);
+        this.initMapData();
 
-        this.scanMap(mapData);
-
-        return mapData;
+        this.scanMap();
     },
 
-    "initMapData": function (mapData) {
-        let blockArray = mapData.blockArray;
-        let bW = mapData.blockSize.width;
-        let bH = mapData.blockSize.height;
+    "initMapData": function () {
+        let blockArray = this.mapData.blockArray;
+        let bW = this.mapData.blockSize.width;
+        let bH = this.mapData.blockSize.height;
 
-        for (let i = 0; i < mapData.blockCount; i++) {
-            for (let j = 0; j < mapData.blockCount; j++) {
+        for (let i = 0; i < this.mapData.verticalBlockC; i++) {
+            for (let j = 0; j < this.mapData.horizontalBlockC; j++) {
                 //块的坐标统一为左下角的坐标,不记录坐标，可以根据块大小和数组下标求出。
                 blockArray[i][j] = {
                     "x": j * bW,
@@ -61,25 +58,25 @@ var sceneScript = {
         }
     },
 
-    "scanMap": function (mapData) {
+    "scanMap": function () {
         let childrenNode = this.gameMapNode.children;
         let len = childrenNode.length;
 
-        this.scanNode(childrenNode[2], mapData);
+        this.scanNode(childrenNode[2], this.mapData);
 
         for (let i = 0; i < len; i++) {
             let node = childrenNode[i];
             if (node.group !== this.groupName) //非障碍物
                 continue;
 
-            this.scanNode(node, mapData);
+            this.scanNode(node);
         }
     },
-    scanNode: function (node, mapData) {
-        let blockArray = mapData.blockArray;
+    scanNode: function (node) {
+        let blockArray = this.mapData.blockArray;
         //块大小
-        let bW = mapData.blockSize.width;
-        let bH = mapData.blockSize.height;
+        let bW = this.mapData.blockSize.width;
+        let bH = this.mapData.blockSize.height;
 
         //获得节点的左下角和右上角
         let pos = node.getPosition();
